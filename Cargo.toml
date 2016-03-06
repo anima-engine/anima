@@ -1,0 +1,7 @@
+[package]
+name = "anima-engine"
+version = "0.1.0"
+description = "Anima build tool."
+authors = ["Dragoș Tiselice <dragostiselice@gmail.com>"]
+keywords = ["anima", "anima-engine", "build", "tool"]
+license = "LGPL-3.0"
