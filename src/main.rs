@@ -27,6 +27,8 @@ Anima build tool.
 Usage:
   anima new <name>
   anima run
+  anima build [--release]
+  anima package <path>
   anima (--help | --version)
 
 Options:
@@ -39,9 +41,56 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 #[derive(Debug, RustcDecodable)]
 struct Args {
     arg_name: String,
+    arg_path: String,
     cmd_new: bool,
     cmd_run: bool,
+    cmd_build: bool,
+    cmd_package: bool,
+    flag_release: bool,
     flag_version: bool
+}
+
+fn new(name: String) {
+    let output = Command::new("cargo")
+                         .arg("new")
+                         .arg("--bin")
+                         .arg(name)
+                         .output()
+                         .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
+
+    if !output.status.success() {
+        panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
+    }
+}
+
+fn run() {
+    let output = Command::new("cargo")
+                         .arg("run")
+                         .output()
+                         .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
+
+    if !output.status.success() {
+        panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
+    }
+}
+
+fn build(release: bool) {
+    let mut command = Command::new("cargo");
+
+    command.arg("build");
+
+    if release { command.arg("--release"); }
+
+    let output = command.output()
+                        .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
+
+    if !output.status.success() {
+        panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
+    }
+}
+
+fn package(path: String) {
+    
 }
 
 fn main() {
@@ -50,25 +99,13 @@ fn main() {
                             .unwrap_or_else(|e| e.exit());
 
     if args.cmd_new {
-        let output = Command::new("cargo")
-                             .arg("new")
-                             .arg("--bin")
-                             .arg(args.arg_name)
-                             .output()
-                             .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
-
-        if !output.status.success() {
-            panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
-        }
+        new(args.arg_name);
     } else if args.cmd_run {
-        let output = Command::new("cargo")
-                             .arg("run")
-                             .output()
-                             .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
-
-        if !output.status.success() {
-            panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
-        }
+        run();
+    } else if args.cmd_build {
+        build(args.flag_release);
+    } else if args.cmd_package {
+        package(args.arg_path);
     } else if args.flag_version {
         println!("Anima build tool v{}", VERSION);
     }
