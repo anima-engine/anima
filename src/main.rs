@@ -17,6 +17,8 @@
 extern crate docopt;
 extern crate rustc_serialize;
 
+mod project;
+
 use std::process::Command;
 
 use docopt::Docopt;
@@ -25,7 +27,7 @@ const USAGE: &'static str = "
 Anima build tool.
 
 Usage:
-  anima new <name>
+  anima new <name> [--no-scripting]
   anima run
   anima build [--release]
   anima package <path>
@@ -46,6 +48,7 @@ struct Args {
     cmd_run: bool,
     cmd_build: bool,
     cmd_package: bool,
+    flag_no_scripting: bool,
     flag_release: bool,
     flag_version: bool
 }
@@ -90,7 +93,7 @@ fn build(release: bool) {
 }
 
 fn package(path: String) {
-    
+
 }
 
 fn main() {
