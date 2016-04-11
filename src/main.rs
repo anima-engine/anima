@@ -101,15 +101,15 @@ struct Args {
 }
 
 fn new(name: String) {
-    let output = Command::new("cargo")
+    let status = Command::new("cargo")
                          .arg("new")
                          .arg("--bin")
                          .arg(name.clone())
-                         .output()
+                         .status()
                          .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e) });
 
-    if !output.status.success() {
-        panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
+    if !status.success() {
+        panic!("Failed to run Cargo");
     }
 
     let mut file = OpenOptions::new()
@@ -139,13 +139,13 @@ fn init_mruby(name: String) {
 }
 
 fn run() {
-    let output = Command::new("cargo")
+    let status = Command::new("cargo")
                          .arg("run")
-                         .output()
+                         .status()
                          .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e) });
 
-    if !output.status.success() {
-        panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
+    if !status.success() {
+        panic!("Failed to run Cargo");
     }
 }
 
@@ -156,11 +156,11 @@ fn build(release: bool) {
 
     if release { command.arg("--release"); }
 
-    let output = command.output()
+    let status = command.status()
                         .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e) });
 
-    if !output.status.success() {
-        panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
+    if !status.success() {
+        panic!("Failed to run Cargo");
     }
 }
 
