@@ -19,6 +19,9 @@ extern crate rustc_serialize;
 
 mod project;
 
+use std::fs::File;
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::process::Command;
 
 use docopt::Docopt;
@@ -40,6 +43,50 @@ Options:
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+const MAIN_RS: &'static str =
+"extern crate anima_engine;
+
+use std::path::Path;
+
+use anima_engine::game::{GameLoop, MrubyGame};
+
+fn main() {
+    let game = MrubyGame::new(Path::new(\"src/game.rb\"));
+
+    GameLoop::new(game).run();
+}
+";
+
+const GAME_RB: &'static str =
+"class Game
+  MAX_TIME = 3
+
+  def initialize()
+    @guess = rand(10) + 1
+    @time = 0
+    @greeted = false
+  end
+
+  def update(dt)
+    @time += dt
+
+    if @time < MAX_TIME
+      if !@greeted
+        puts \"Guess a number from 1 to 10. You have #{MAX_TIME} seconds.\"
+
+        @greeted = true
+      end
+
+      true # The game has to continue.
+    else
+      puts \"The number was #{@guess}.\"
+
+      false # The game is over.
+    end
+  end
+end
+";
+
 #[derive(Debug, RustcDecodable)]
 struct Args {
     arg_name: String,
@@ -57,20 +104,45 @@ fn new(name: String) {
     let output = Command::new("cargo")
                          .arg("new")
                          .arg("--bin")
-                         .arg(name)
+                         .arg(name.clone())
                          .output()
-                         .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
+                         .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e) });
 
     if !output.status.success() {
         panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
     }
+
+    let mut file = OpenOptions::new()
+                                .write(true)
+                                .append(true)
+                                .open(name.clone() + "/Cargo.toml")
+                                .unwrap_or_else(|e| { panic!("Cannot open Cargo.toml: {}", e) });
+
+    file.write("anima-engine = \"0.0.1\"\n".as_bytes())
+        .unwrap_or_else(|e| { panic!("Cannot write to Cargo.toml: {}", e); });;
+
+    init_mruby(name);
+}
+
+fn init_mruby(name: String) {
+    let mut file = File::create(name.clone() + "/src/main.rs")
+                         .unwrap_or_else(|e| { panic!("Cannot open main.rs: {}", e) });
+
+    file.write(MAIN_RS.as_bytes())
+        .unwrap_or_else(|e| { panic!("Cannot write to main.rs: {}", e) });
+
+    let mut file = File::create(name + "/src/game.rb")
+                         .unwrap_or_else(|e| { panic!("Cannot open game.rb: {}", e) });
+
+    file.write(GAME_RB.as_bytes())
+        .unwrap_or_else(|e| { panic!("Cannot write to game.rb: {}", e) });
 }
 
 fn run() {
     let output = Command::new("cargo")
                          .arg("run")
                          .output()
-                         .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
+                         .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e) });
 
     if !output.status.success() {
         panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
@@ -85,7 +157,7 @@ fn build(release: bool) {
     if release { command.arg("--release"); }
 
     let output = command.output()
-                        .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e); });
+                        .unwrap_or_else(|e| { panic!("Failed to run Cargo: {}", e) });
 
     if !output.status.success() {
         panic!("Failed to run Cargo: {}", String::from_utf8(output.stderr).unwrap());
